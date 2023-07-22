@@ -513,7 +513,7 @@ path.isfile('')
 path.isdir('')
 #^insert path - bool out
 path.exists()
-#^returns if a file exists
+#^returns if a file OR dir with given path exists
 path.join("","")
 
 #%%
@@ -523,6 +523,7 @@ os.getcwd()
 os.chdir()
 #^change directory
 os.listdir()
+#^directories list
 
 '''
 os.mkdir()
@@ -617,6 +618,8 @@ import time
 time.sleep(seconds)
 #^wait for "seconds" time (program does nothing)
 #%%
+#To save requirements:
+#pip freeze > requirements.txt
 """
 pipreqs path/proj.py
 saves requirements.txt in the same directory
