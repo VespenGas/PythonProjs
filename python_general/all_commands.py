@@ -566,6 +566,32 @@ WINDOWS:
     out_file = "PATH"
     subprocess.Popen(["explorer", out_file], creationflags=subprocess.DETACHED_PROCESS)
 '''
+
+#%%
+#PATHLIB
+import pathlib
+from pathlib import Path
+#if pwd/dir:
+pathlib_path = pathlib.Path('/dir')
+pathlib_path = Path.cwd()
+#----
+os_path = str(path)
+pathlib_path = PosixPath(os.getcwd())
+#^forward and backward conversion between pathlib path and os path
+pathlib_path.glob(regex)
+#^glob outputs all the files, which are contained in child directories, which
+#satisfy the requirements of regex (e.g. *.txt for all text files in dir, depth=1)
+pathlib_path.parent
+#get the path for a parent directory
+pathlib_path.stem
+#returns the name of the directory
+
+
+
+
+
+
+
 #%%
 import tempfile
 temp = tempfile.NamedTemporaryFile(prefix='', suffix='')
@@ -698,16 +724,6 @@ With pytz:
 ^converts given date (var) in code format to datetime readable value
 code format must be that for .strftime
 '''
-
-
-#%%
-#arrow - needs to be installed
-#date and time in easy format
-import arrow
-
-
-
-
 
 #%%
 #inspect
