@@ -1,13 +1,19 @@
 import torch
 import requests
-import torchvision
-from pathlib import Path
+from pathlib import Path, PosixPath
 import zipfile
 import os
 from PIL import Image
+from torch.utils.data import DataLoader
+from torchvision import transforms, datasets
+from torch import nn
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 RANDOM_SEED = 42
+torch.manual_seed(RANDOM_SEED)
+torch.cuda.manual_seed(RANDOM_SEED)
+BATCH_SIZE = 32
+NUM_EPOCHS = 5
 
 #Download a custom dataset if it does not exist:
 data_path = os.path.join(os.getcwd(), 'data')
@@ -47,6 +53,52 @@ print(all_required_filepaths)
 '''
 #Using Pathlib:
 
+image_path = PosixPath(image_path)
+images = list(image_path.glob('*/*/*.jpg'))
+
+#Executing image lib -> dataset -> data loader
+
+train_data_transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    #transforms.RandomHorizontalFlip(p=0.5),
+    transforms.TrivialAugmentWide(num_magnitude_bins=31),
+    transforms.ToTensor()
+    ])
+test_data_transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    #transforms.RandomHorizontalFlip(p=0.5),
+    #transforms.TrivialAugmentWide(num_magnitude_bins=31),
+    transforms.ToTensor()
+    ])
+train_set_aug = datasets.ImageFolder(root=train_path, transform=train_data_transform)
+test_set = datasets.ImageFolder(root=test_path, transform=test_data_transform, target_transform=None)
+class_names = train_set_aug.classes
+class_dict = train_set_aug.class_to_idx
+
+train_dataloader = DataLoader(dataset=train_set_aug, batch_size=BATCH_SIZE, shuffle=True, num_workers=os.cpu_count())
+test_dataloader = DataLoader(dataset=test_set, batch_size=BATCH_SIZE, num_workers=os.cpu_count())
+#print(next(iter(train_dataloader)))
+
+class TinyVGG(nn.Module):
+    def __init__(self, input_shape=3, hidden_layers=30, output_shape = 2):
+        super().__init__()
+        self.sequential_model = nn.Sequential(
+            nn.Conv2d(input_shape, hidden_layers, kernel_size = 3, stride = 1, padding=1),
+            nn.GELU(),
+            nn.Conv2d(hidden_layers, hidden_layers, kernel_size = 3, stride = 1, padding=1),
+            nn.GELU(),
+            nn.MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False),
+            nn.Conv2d(hidden_layers, hidden_layers, kernel_size = 3, stride = 1, padding=1),
+            nn.GELU(),
+            nn.Conv2d(hidden_layers, hidden_layers, kernel_size = 3, stride = 1, padding=1),
+            nn.GELU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Flatten(),
+            nn.Linear(in_features=hidden_layers*16*16, out_features=3)
+            )
+    def forward(self, x):
+        return self.sequential_model(x)
+model = TinyVGG(input_shape = 3, hidden_layers=10, output_shape=len(class_names)).to(device)
 
 
 

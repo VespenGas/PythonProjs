@@ -533,14 +533,14 @@ os.removedirs() <- better than rmdir
 '''
 
 os.rename()
-'''^rename folder
-
+#^rename folder
+'''
 os.stat().statname() - statistics on file - statname optional
 st_mtime - modification time (s)
 st_ctime - creation time (s)
 st_atime - access time (s)
 st_mode - file type & permissions
-st_size - file size, 
+st_size - file size
 '''
 os.walk('')
 #^displays all contained files and directories higher up the given path
@@ -569,26 +569,73 @@ WINDOWS:
 
 #%%
 #PATHLIB
-import pathlib
 from pathlib import Path
 #if pwd/dir:
-pathlib_path = pathlib.Path('/dir')
+pathlib_path = Path('/dir')
 pathlib_path = Path.cwd()
 #----
 os_path = str(path)
 pathlib_path = PosixPath(os.getcwd())
 #^forward and backward conversion between pathlib path and os path
-pathlib_path.glob(regex)
+pathlib_path.glob(regex_like_filter)
 #^glob outputs all the files, which are contained in child directories, which
 #satisfy the requirements of regex (e.g. *.txt for all text files in dir, depth=1)
 pathlib_path.parent
 #get the path for a parent directory
+pathlib_path.parents
+#iterator for all parent directory layers:
+for parent in pathlib_path.parents:
+    print(parent)
+#-----
+pathlib_path.name
+#returns the name of file or dir without suffix
 pathlib_path.stem
-#returns the name of the directory
-
-
-
-
+#same as .name, excluding suffix
+#.name and .stem are same for dirs
+pathlib_path.suffix
+#returns file extension for file and empty string for dir
+pathlib_path.absolute()
+#returns the absolute path
+file = Path('file.txt')
+file.stat()
+"""
+Output:
+    st_mtime - modification time (s)
+    st_ctime - creation time (s)
+    st_atime - access time (s)
+    st_mode - file type & permissions
+    st_size - file size
+"""
+file.stat().st_size
+#^outputs file size (bytes)
+from datetime import datetime
+datetime.fromtimestamp(file.stat().mtime)
+#^returns a tuple describing file mod time
+file.exists()
+#bool - if the file exists or not
+'''
+.is_dir()
+.is_file()
+.is_symlink()
+etc.
+All are bools to check if the path ends on certain object
+'''
+pathlib_path = Path('main_dir').joinpath('dir1', 'dir2', 'dir3', 'file.txt')
+#or
+pathlib_path = Path('main_dir') / "dir1" / "dir2" / "dir3" / "file.txt"
+#same as os.path.join()
+pathlib_path.parts
+#displays a list of all dirs and files that are included in the path
+# in parent-> child sequence
+pathlib_path.mkdir()
+#attempts to create a child directory, if parent dir not present, raise exception
+#essentially equal to os.mrdir()
+pathlib_path.mkdir(parents=True)
+#equivalent to os.makedirs - creates parent dir if does not exist
+pathlib_path.iterdir()
+#iterator for directory contents
+for path in pathlib_path.itemdir():
+    print(path)
 
 
 
