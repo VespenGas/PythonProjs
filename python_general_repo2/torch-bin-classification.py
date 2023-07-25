@@ -17,7 +17,7 @@ else:
   with open("helper_functions.py", "wb") as f: 
     f.write(request.content) 
  
-from helper_functions import plot_predictions, plot_decision_boundary
+from helper_functions import plot_decision_boundary
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 torch.manual_seed(42)

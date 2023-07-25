@@ -26,6 +26,7 @@ print(f'CPU is: {tf.config.experimental.get_device_details(CPUs[0])}')
 
 #Check compute capability
 if GPUs:
+    print(torch.cuda.mem_get_info("cuda:0"))
     capabilityGPU = tf.config.experimental.get_device_details(GPUs[0]).get("compute_capability")
     capabilityGPU = float(str(capabilityGPU[0]) + '.' + str(capabilityGPU[1]))
     print(f'Compute capability: {capabilityGPU}')
@@ -41,4 +42,7 @@ matrix.shape
 #Pytorch
 print(torch.cuda.is_available())
 print(torch.zeros(1).cuda())
+
+#if CUDA out of memory, set:
+#os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:<enter-size-here>"
 

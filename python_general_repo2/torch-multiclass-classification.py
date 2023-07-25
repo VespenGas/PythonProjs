@@ -59,7 +59,7 @@ y_blob_test = y_blob_test.to(device)
 print(X_blob_train.shape, X_blob_test.shape, y_blob_train.shape, y_blob_test.shape)
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
-metric = torchmetrics.classification.MulticlassAccuracy(num_classes=NUM_CLASSES).to(device)
+metric = torchmetrics.classification.MulticlassAccuracy(NUM_CLASSES).to(device)
 epochs = 40
 for epoch in range(epochs+1):
     y_logits = model(X_blob_train).squeeze()

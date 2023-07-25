@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 
 from torchvision import datasets
 from torchvision import transforms
-import torchmetrics
+from torchmetrics.classification import MulticlassAccuracy
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-from helper_functions import accuracy_fn
+#from helper_functions import accuracy_fn
 
 def train_step(model: torch.nn.Module, data_loader: torch.utils.data.DataLoader,
                loss_fn: torch.nn.Module, optimizer: torch.optim.Optimizer,
@@ -21,17 +21,16 @@ def train_step(model: torch.nn.Module, data_loader: torch.utils.data.DataLoader,
         y_pred = model(X)
         loss = loss_fn(y_pred, y)        
         train_loss += loss
-        train_acc += accuracy_fn(y_true=y,                                 
-                                 y_pred=y_pred.argmax(dim=1))
+        train_acc += accuracy_fn(y_pred.argmax(dim=1), y)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
     train_loss /= len(data_loader)
     train_acc /= len(data_loader)    
-    print(f"Train loss: {train_loss:.5f} | Train accuracy: {train_acc:.2f}%")
+    print(f"Train loss: {train_loss:.5f} | Train accuracy: {train_acc*100:.2f}%")
 def test_step(data_loader: torch.utils.data.DataLoader,
               model: torch.nn.Module, loss_fn: torch.nn.Module,
-              accuracy_fn, evice: torch.device = device):
+              accuracy_fn, device: torch.device = device):
     test_loss, test_acc = 0, 0    
     model.to(device)
     model.eval()
@@ -40,11 +39,10 @@ def test_step(data_loader: torch.utils.data.DataLoader,
             X, y = X.to(device), y.to(device)
             test_pred = model(X)     
             test_loss += loss_fn(test_pred, y)
-            test_acc += accuracy_fn(y_true=y,                
-                                    y_pred=test_pred.argmax(dim=1))
+            test_acc += accuracy_fn(test_pred.argmax(dim=1), y)
         test_loss /= len(data_loader)
         test_acc /= len(data_loader)        
-        print(f"Test loss: {test_loss:.5f} | Test accuracy: {test_acc:.2f}%\n")
+        print(f"Test loss: {test_loss:.5f} | Test accuracy: {test_acc*100:.2f}%\n")
 
 
 train_data = datasets.FashionMNIST(root = 'data', train=True,
@@ -81,7 +79,7 @@ train_dataset = torch.utils.data.DataLoader(train_data, batch_size = 32, shuffle
 test_dataset = torch.utils.data.DataLoader(test_data, batch_size = 32, shuffle=True)
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(params=model.parameters(), lr=0.1)
-#accuracy_fn = torchmetrics.Accuracy(task='multiclass', num_classes=10)
+accuracy_fn = MulticlassAccuracy(len(class_names)).to(device)
 epochs = 3
 for epoch in tqdm(range(epochs)):
     train_step(
