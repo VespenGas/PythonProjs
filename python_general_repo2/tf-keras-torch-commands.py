@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 #Tensorflow
 print(tf.__version__)
 print(tf.sysconfig.get_build_info())
-tf.compat.v1.Session()
+#tf.compat.v1.Session()
 
 GPUs = tf.config.list_physical_devices('GPU')
 if GPUs:
@@ -26,7 +26,7 @@ print(f'CPU is: {tf.config.experimental.get_device_details(CPUs[0])}')
 
 #Check compute capability
 if GPUs:
-    print(torch.cuda.mem_get_info("cuda:0"))
+    
     capabilityGPU = tf.config.experimental.get_device_details(GPUs[0]).get("compute_capability")
     capabilityGPU = float(str(capabilityGPU[0]) + '.' + str(capabilityGPU[1]))
     print(f'Compute capability: {capabilityGPU}')
@@ -41,7 +41,14 @@ matrix.shape
 #%%
 #Pytorch
 print(torch.cuda.is_available())
+if torch.cuda.is_available():
+    total_free_mem, total_mem = torch.cuda.mem_get_info("cuda:0")
+    print(f'Total free GPU memory is: {total_free_mem/1024**2} MB')
+    print(f'Total GPU memory is: {total_mem/1024**2} MB')
+else:
+    print("GPU not available!")
 print(torch.zeros(1).cuda())
+
 
 #if CUDA out of memory, set:
 #os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:<enter-size-here>"

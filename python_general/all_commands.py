@@ -794,9 +794,18 @@ text = text.decode('encoding')
 #^extracts text from doc or docx file
 
 #%%
+#Zipfile and rarfile
+#Open .zip file and extract it
+import zipfile
+with zipfile.ZipFile('path') as f:
+    f.extractall('path_to_extracted_folder')
+import rarfile
+with rarfile.RarFile('path') as f:
+    f.extractall('path_to_extracted_folder')    
+
+#%%
 #temp
-import tempfile
-print()
+
 
 
 
