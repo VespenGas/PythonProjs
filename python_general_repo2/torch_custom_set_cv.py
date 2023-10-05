@@ -13,7 +13,9 @@ from torchinfo import summary
 #from helper_functions import accuracy_fn
 from torchmetrics.classification import MulticlassAccuracy
 from tqdm import tqdm
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:5128"
+
+#os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:8192"
+torch.cuda.empty_cache()
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 RANDOM_SEED = 42
@@ -67,13 +69,13 @@ images = list(image_path.glob('*/*/*.jpg'))
 #Executing image lib -> dataset -> data loader
 
 train_data_transform = transforms.Compose([
-    transforms.Resize((64, 64)),
-    #transforms.RandomHorizontalFlip(p=0.5),
+    transforms.Resize((1024, 1024)),
+    transforms.RandomHorizontalFlip(p=0.5),
     transforms.TrivialAugmentWide(num_magnitude_bins=11),
     transforms.ToTensor()
     ])
 test_data_transform = transforms.Compose([
-    transforms.Resize((64, 64)),
+    transforms.Resize((1024, 1024)),
     #transforms.RandomHorizontalFlip(p=0.5),
     #transforms.TrivialAugmentWide(num_magnitude_bins=31),
     transforms.ToTensor()
@@ -104,7 +106,7 @@ class TinyVGG(nn.Module):
             nn.GELU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Flatten(),
-            nn.Linear(in_features=hidden_layers*16*16, out_features=3)
+            nn.Linear(in_features=hidden_layers*16*16*256, out_features=3)
             )
     def forward(self, x):
         return self.sequential_model(x)
@@ -165,5 +167,5 @@ for epoch in tqdm(range(NUM_EPOCHS)):
         accuracy_fn=accuracy_fn
         )
 
-
+torch.cuda.empty_cache()
 

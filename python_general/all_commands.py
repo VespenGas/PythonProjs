@@ -802,12 +802,38 @@ with zipfile.ZipFile('path') as f:
 import rarfile
 with rarfile.RarFile('path') as f:
     f.extractall('path_to_extracted_folder')    
+#%%
+import unicodedata
+unicodedata.name('a')
+#^output unicode name of a char
+
+
+#%%
+import dis
+dis.dis(function)
+#python bytecode disassembler - shows literal interpreter actions
+#
+
+#%%
+import pkg_resources
+#library to check if the module is installed
+print(pkg_resources.get_distribution('numpy'))
+#will output numpy and its version if installed, 
+#will raise DistributionNotFound error if module is not installed
+
+#%%
+from tqdm import tqdm
+import time
+for i in tqdm(range(1000)):
+    i = 5
+    time.sleep(0.01)
 
 #%%
 #temp
 
 
 
-
 #%%
+
+
 

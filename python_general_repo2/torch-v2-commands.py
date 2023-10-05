@@ -19,4 +19,3 @@ model_weights = torchvision.models.ResNet50_Weights.IMAGENET1K_V2
 transforms = model_weights.transforms()
 
 
-
