@@ -1290,12 +1290,12 @@ SVMClas.support_vectors_
 SVMClas.support_
 #^get indices of support vectors
 
-#Cross validation for SMV parameter optimization
+#Cross validation
 from sklearn.model_selection import GridSearchCV
 param_grid = [
     {'C':[0.5, 1, 10, 100], #must be >0
      'gamma': ['scale', 1, 0.1, 0.01, 0.001, 0.0001],
-     'kernel': ['rbf']},]
+     'kernel': ['rbf']}]
 #defaults are C=1 and gamma = 'scale', and they are to be included (recommended)
 optimal_params = GridSearchCV(svm.SVC(), param_grid,
                               cv=5, #optional - None = '5' default
@@ -1303,17 +1303,27 @@ optimal_params = GridSearchCV(svm.SVC(), param_grid,
                               )
 #verbose to 0 for silent mode, optional
 #scoring named options:
-#   accuracy - Default
-#   balanced_accuracy - m.b. better
-#   f1_micro
-#   f1_macro
-#   f1_weighed
+'''['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score',
+    'average_precision', 'balanced_accuracy', 'completeness_score',
+    'explained_variance', 'f1', 'f1_macro', 'f1_micro', 'f1_samples',
+    'f1_weighted', 'fowlkes_mallows_score', 'homogeneity_score',
+    'jaccard', 'jaccard_macro', 'jaccard_micro', 'jaccard_samples',
+    'jaccard_weighted', 'matthews_corrcoef', 'max_error', 
+    'mutual_info_score', 'neg_brier_score', 'neg_log_loss', 
+    'neg_mean_absolute_error', 'neg_mean_absolute_percentage_error', 
+    'neg_mean_gamma_deviance', 'neg_mean_poisson_deviance', 
+    'neg_mean_squared_error', 'neg_mean_squared_log_error', 
+    'neg_median_absolute_error', 'neg_negative_likelihood_ratio', 
+    'neg_root_mean_squared_error', 'normalized_mutual_info_score', 
+    'positive_likelihood_ratio', 'precision', 'precision_macro', 
+    'precision_micro', 'precision_samples', 'precision_weighted', 
+    'r2', 'rand_score', 'recall', 'recall_macro', 'recall_micro', 
+    'recall_samples', 'recall_weighted', 'roc_auc', 'roc_auc_ovo', 
+    'roc_auc_ovo_weighted', 'roc_auc_ovr', 'roc_auc_ovr_weighted',
+    'top_k_accuracy', 'v_measure_score']'''
+    
 optimal_params.fit(X_train, y_train)
-#outputs optimal 'C' and 'gamma'
-#Then:
-SVMClasSecond = svm.SVC(C=, gamma=)
-#with C and gamma given by GridSearchCV
-#Some improvement comparing to 1st run
+#outputs optimal variables from GridSearchCV
 
 #Regression
 from sklearn import svm

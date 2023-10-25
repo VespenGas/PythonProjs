@@ -26,7 +26,6 @@ print(f'CPU is: {tf.config.experimental.get_device_details(CPUs[0])}')
 
 #Check compute capability
 if GPUs:
-    
     capabilityGPU = tf.config.experimental.get_device_details(GPUs[0]).get("compute_capability")
     capabilityGPU = float(str(capabilityGPU[0]) + '.' + str(capabilityGPU[1]))
     print(f'Compute capability: {capabilityGPU}')
