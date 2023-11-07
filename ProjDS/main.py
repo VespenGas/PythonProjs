@@ -8,8 +8,6 @@ import seaborn as sns
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import folium
-from folium.plugins import HeatMap
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 
@@ -58,12 +56,14 @@ if use_nsw_only==True:
     
 
 print('Dataframe example data:\n')
-print(f'>There are {client_locs.shape[0]} clients in the area.\n')
 print('Clients:\n')
 print(client_locs.head(10))
-print(f'>There are {fs_df.shape[0]} services in the area.\n')
+print(f'>There are {client_locs.shape[0]} clients in the area.\n')
+
 print('\nServices:\n')
 print(fs_df.head(10))
+print(f'>There are {fs_df.shape[0]} services in the area.\n')
+
 #%%
 #Read GPD shapefile
 print("\nExtracting shapefile (Australia)...\n")
@@ -81,17 +81,23 @@ australia = australia['geometry']
 #Print Australia image + fire stations
 print('\nPlotting...')
 scale=6
-_size=1
-
-_figsize = np.asarray(matplotlib.rcParams['figure.figsize'])
-sns.set_style("whitegrid")
-fig, ax = plt.subplots(figsize=_figsize*scale)
-fs_plot = sns.scatterplot(ax = ax, data=fs_df, x='lon', y='lat', legend=False, zorder=3, s=scale**(1.5)*_size*10)
-
-australia.plot(ax = ax, color='lightgrey', edgecolor='grey', linewidth=scale/3, zorder=1)
-
-#sns.scatterplot(ax = ax, data=client_locs, x='lon', y='lat', zorder=2, s=scale**(1.5)*_size*2, color='red')
-
-
-
+_size=0.5
+if not os.path.isfile('NSW_FS_client_KDE.png'):
+    _figsize = np.asarray(matplotlib.rcParams['figure.figsize'])
+    sns.set_style("whitegrid")
+    fig, ax = plt.subplots(figsize=_figsize*scale)
+    fs_plot = sns.scatterplot(ax = ax, data=fs_df, x='lon', y='lat', legend=False, zorder=3, s=scale**(1.5)*_size*10)
+    
+    australia.plot(ax = ax, color='lightgrey', edgecolor='grey', linewidth=scale/3, zorder=1)
+    
+    #sns.scatterplot(ax = ax, data=client_locs, x='lon', y='lat', zorder=2, s=scale**(1.5)*_size*2, color='red')
+    sns.kdeplot(data=client_locs, x='lon', y='lat', fill=True,
+                cmap='coolwarm',
+                alpha=0.2,
+                #linewidth=0,
+                levels=30, thresh=0.01,
+                ax=ax)
+    fig.get_figure().savefig("NSW_FS_client_KDE.png")
+else:
+    print('Plot already exists')
 
