@@ -871,7 +871,7 @@ signal
 #pandas
 #Jupyter notebooks recommended
 import pandas as pd
-df = pd.csv_read('text.csv', index_col = 'col_name', na_values = [list])
+df = pd.read_csv('text.csv', index_col = 'col_name', na_values = [list])
 #^index_col equivalent to df.set_index, but with file read
 #na_values - detects which values are considered to be NaN, None, etc.
 #parse_dates = ['column'] - sets a column to be read in datetime64 format
