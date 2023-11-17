@@ -11,9 +11,14 @@ import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 import torch
-import torch.nn.functional as F
 import kmeans_pytorch
 from importlib import reload
+import multiprocessing
+import itertools
+import platform
+import subprocess
+import re
+
 
 
 print(f'Cuda available: {torch.cuda.is_available()}')
@@ -23,6 +28,20 @@ print('GPU available' if device=='cuda:0' else 'CPU available')
 dtype = torch.float32 if device == 'cuda:0' else torch.float64
 
 #-----------------------------------------------------------------------------
+def get_processor_name():
+    if platform.system() == "Windows":
+        return platform.processor()
+    elif platform.system() == "Darwin":
+        os.environ['PATH'] = os.environ['PATH'] + os.pathsep + '/usr/sbin'
+        command ="sysctl -n machdep.cpu.brand_string"
+        return subprocess.check_output(command).strip()
+    elif platform.system() == "Linux":
+        command = "cat /proc/cpuinfo"
+        all_info = subprocess.check_output(command, shell=True).decode().strip()
+        for line in all_info.split("\n"):
+            if "model name" in line:
+                return re.sub( ".*model name.*:", "", line,1)
+    return ""
 def get_columns(raw_df, column_names:list[str]):
     return_df = pd.DataFrame()
     for column_name in column_names:
@@ -55,7 +74,37 @@ def get_data_fraction(data, *, cv, fraction_id):
     assert fraction_id<=cv, "Requested fraction ID higher than fractions amount"
     len_of_fraction = int(data.shape[0]/cv)
     return data[len_of_fraction*fraction_id:len_of_fraction*(fraction_id+1), 0:]
+def perform_k_means(client_locs_train, cv, fraction_id, _n_clusters):
+    data = get_data_fraction(client_locs_train, cv=cv, fraction_id=fraction_id)
+    print(f'FractionID is: {fraction_id} with {data.shape[0]} entries.')
+    model = KMeans(n_clusters=_n_clusters, max_iter=500, n_init=10, tol=1e-4)
+    model.fit_predict(data)
+    labels = model.labels_
+    centroids = model.cluster_centers_
+    
+    print(f'\nNumber of clusters (SKLearn): {_n_clusters}')
+    silhouette = silhouette_score(data, labels)
+    print(f'Silhouette score (SKLearn) - {silhouette} - Best is 1 - Worst is -1')
+    calinski_harabasz = calinski_harabasz_score(data, labels)
+    print(f'Calinski Harabasz score (SKLearn) - {calinski_harabasz} - Higher is better')
+    davies_bouldin = davies_bouldin_score(data, labels)
+    print(f'Davies Bouldin score (SKLearn) - {davies_bouldin} - Best is 0')
+    
+    out = pd.Series({
+        'data_fraction_ID':fraction_id,
+        'number_of_clients_fractured':data.shape[0], 
+        'number_of_clusters':_n_clusters,
+        'silhouette_score':silhouette,
+        'calinski_harabasz_score':calinski_harabasz,
+        'davies_bouldin_score':davies_bouldin,
+        'cluster_center':centroids
+        })
+    return out
 #-----------------------------------------------------------------------------
+if "Intel" in get_processor_name():
+    from sklearnex import patch_sklearn
+    patch_sklearn()
+
 assert os.path.isfile('countrywide.csv'), 'countrywide.csv file is missing from the current working directory'
 assert os.path.isfile('stations-georss.php'), 'stations-georss.php file is missing from the current working directory'
 
@@ -80,7 +129,7 @@ fs_df.rename(columns={'geo:lat' : 'lat', 'geo:long' : 'lon'}, inplace=True)
 fs_df = fs_df.dropna()
 client_locs = client_locs.dropna()
 
-if use_nsw_only==True:
+if use_nsw_only:
     client_locs = client_locs[client_locs['region']=='NSW']
     
 
@@ -131,15 +180,14 @@ if not os.path.isfile('NSW_FS_client_KDE.png'):
 else:
     print('Plot already exists')
 #%%Apply k-Means
-
 #Test mode (less compute time) - only 100000 addresses
-
 test_mode = False
 use_abstract_clusters=False
-cv=20
+cv=16
 
+fraction_ids = list(range(cv))
 if test_mode == True:
-    client_locs_train = client_locs[['lon', 'lat']].sample(frac=1).sample(n=100000).to_numpy()
+    client_locs_train = client_locs[['lon', 'lat']].sample(frac=1).sample(n=10000).to_numpy()
 else:
     client_locs_train = client_locs[['lon', 'lat']].sample(frac=1).to_numpy()
 
@@ -149,14 +197,31 @@ if use_abstract_clusters==True:
 else:
     _n_clusters_list = list(range(fs_df.shape[0]-10, fs_df.shape[0]+10))
 
-
-
-result_df = pd.DataFrame(columns=['number_of_clients', 'number_of_clusters', 'silhouette_score', 'calinski_harabasz_score', 'davies_bouldin_score'])
+result_df = pd.DataFrame(columns=['data_fraction_ID', 'number_of_clients_fractured', 'number_of_clusters', 'silhouette_score', 'calinski_harabasz_score', 'davies_bouldin_score', 'cluster_center'])
 print(f'N Clusters are {_n_clusters_list}')
+
 #For Torch implementation
 x = torch.from_numpy(client_locs_train)
+if not os.path.isfile('df_k_means_metrics.csv'):
+    print('='*80)
+    print('Generating k-Means, this will last (~20 hours in production mode).')
+    print('='*80)
+    cores=multiprocessing.cpu_count()/2
+    pool = multiprocessing.Pool(16)
+    #result_df.loc[len(result_df)] = 
+    result_df = pool.starmap(perform_k_means, list(itertools.product([client_locs_train], [cv], fraction_ids, _n_clusters_list)))
+    pool.close()
+    pool.join()
+    result_df = pd.DataFrame(result_df)
+    result_df.to_csv('df_k_means_metrics.csv')
+else:
+    print('Report already exists.')
+#%%
+
+"""
+
 for _n_clusters in _n_clusters_list:
-    for fraction_id in range(cv):
+    for fraction_id in fraction_ids:
         '''
         torch.cuda.empty_cache()
         reload(kmeans_pytorch)
@@ -188,31 +253,8 @@ for _n_clusters in _n_clusters_list:
         '''
         #SKLearn implementation (comparison)
         #SKLearn is more precise - will use it anyway
-        data = get_data_fraction(client_locs_train, cv=cv, fraction_id=fraction_id)
-        print(f'FractionID is: {fraction_id} with {data.shape[0]} entries.')
-        model = KMeans(n_clusters=_n_clusters, max_iter=500, n_init=10, tol=1e-4)
-        model.fit_predict(data)
-        labels = model.labels_
-        centroids = model.cluster_centers_
         
-        print(f'\nNumber of clusters (SKLearn): {_n_clusters}')
-        silhouette = silhouette_score(data, labels)
-        print(f'Silhouette score (SKLearn) - {silhouette} - Best is 1 - Worst is -1')
-        calinski_harabasz = calinski_harabasz_score(data, labels)
-        print(f'Calinski Harabasz score (SKLearn) - {calinski_harabasz} - Higher is better')
-        davies_bouldin = davies_bouldin_score(data, labels)
-        print(f'Davies Bouldin score (SKLearn) - {davies_bouldin} - Best is 0')
-        
-        #%%
-        result_df.loc[len(result_df)] = pd.Series({
-            'data_fraction_ID':fraction_id,
-            'number_of_clients_fractured':data.shape[0], 
-            'number_of_clusters':_n_clusters,
-            'silhouette_score':silhouette,
-            'calinski_harabasz_score':calinski_harabasz,
-            'davies_bouldin_score':davies_bouldin,
-            'cluster_center':centroids
-            })
+        result_df.loc[len(result_df)] = perform_k_means(client_locs_train, cv, fraction_id, _n_clusters)
         
 print('\nDF created:\n')
 print(result_df.head(5))
@@ -220,6 +262,6 @@ print(result_df.head(5))
 #%%
 result_df.to_csv('df_k_means_metrics.csv')
 
-
-
-
+#%%
+print(list(itertools.product([client_locs_train], [cv], fraction_ids, _n_clusters_list)))
+"""
