@@ -74,25 +74,21 @@ def get_data_fraction(data, *, cv, fraction_id):
     assert fraction_id<=cv, "Requested fraction ID higher than fractions amount"
     len_of_fraction = int(data.shape[0]/cv)
     return data[len_of_fraction*fraction_id:len_of_fraction*(fraction_id+1), 0:]
-def perform_k_means(client_locs_train, cv, fraction_id, _n_clusters):
-    data = get_data_fraction(client_locs_train, cv=cv, fraction_id=fraction_id)
-    print(f'FractionID is: {fraction_id} with {data.shape[0]} entries.')
+def perform_k_means(client_locs_train, _n_clusters):
     model = KMeans(n_clusters=_n_clusters, max_iter=500, n_init=10, tol=1e-4)
-    model.fit_predict(data)
+    model.fit_predict(client_locs_train)
     labels = model.labels_
     centroids = model.cluster_centers_
     
     print(f'\nNumber of clusters (SKLearn): {_n_clusters}')
-    silhouette = silhouette_score(data, labels)
+    silhouette = silhouette_score(client_locs_train, labels)
     print(f'Silhouette score (SKLearn) - {silhouette} - Best is 1 - Worst is -1')
-    calinski_harabasz = calinski_harabasz_score(data, labels)
+    calinski_harabasz = calinski_harabasz_score(client_locs_train, labels)
     print(f'Calinski Harabasz score (SKLearn) - {calinski_harabasz} - Higher is better')
-    davies_bouldin = davies_bouldin_score(data, labels)
+    davies_bouldin = davies_bouldin_score(client_locs_train, labels)
     print(f'Davies Bouldin score (SKLearn) - {davies_bouldin} - Best is 0')
     
     out = pd.Series({
-        'data_fraction_ID':fraction_id,
-        'number_of_clients_fractured':data.shape[0], 
         'number_of_clusters':_n_clusters,
         'silhouette_score':silhouette,
         'calinski_harabasz_score':calinski_harabasz,
@@ -164,7 +160,6 @@ print('\nPlotting...')
 scale=6
 _size=0.5
 x1, x2, y1, y2 = 150, 152, -35, -32.5
-
 _figsize = np.asarray(matplotlib.rcParams['figure.figsize'])
 if not os.path.isfile('NSW_FS_client_KDE.png'):
     print('Creating KDE plot - this may take time (up to 1 hour)')
@@ -205,9 +200,10 @@ else:
     print('Plot already exists')
 #%%Apply k-Means
 #Test mode (less compute time) - only 100000 addresses
-test_mode = False
-use_abstract_clusters=False
+test_mode = True
+use_abstract_clusters=True
 cv=16
+silhouette_multiplier=0.5
 
 fraction_ids = list(range(cv))
 if test_mode == True:
@@ -219,28 +215,51 @@ if use_abstract_clusters==True:
     _n_clusters_init = int((client_locs_train.shape[0]**(0.5)+1)/50)
     _n_clusters_list = list(range(_n_clusters_init, _n_clusters_init*10, 25))
 else:
-    _n_clusters_list = list(range(fs_df.shape[0]-10, fs_df.shape[0]+10))
+    _n_clusters_list = list(range(int((fs_df.shape[0]-5)/10), int((fs_df.shape[0]+5)/10)))
 
-result_df = pd.DataFrame(columns=['data_fraction_ID', 'number_of_clients_fractured', 'number_of_clusters', 'silhouette_score', 'calinski_harabasz_score', 'davies_bouldin_score', 'cluster_center'])
+result_df = pd.DataFrame(columns=['number_of_clusters', 'silhouette_score', 'calinski_harabasz_score', 'davies_bouldin_score', 'cluster_center'])
 print(f'N Clusters are {_n_clusters_list}')
 
 #For Torch implementation
 x = torch.from_numpy(client_locs_train)
-if not os.path.isfile('df_k_means_metrics.csv'):
-    print('='*80)
-    print('Generating k-Means, this will last (~20 hours in production mode).')
-    print('='*80)
-    cores=multiprocessing.cpu_count()/2
-    pool = multiprocessing.Pool(16 if cv>16 else cv)
-    #result_df.loc[len(result_df)] = 
-    result_df = pool.starmap(perform_k_means, list(itertools.product([client_locs_train], [cv], fraction_ids, _n_clusters_list)))
-    pool.close()
-    pool.join()
-    result_df = pd.DataFrame(result_df)
-    result_df.to_csv('df_k_means_metrics.csv')
-    print('Done!')
-else:
-    print('Report already exists.')
+
+result_df = pd.DataFrame()
+for _n_clusters in _n_clusters_list:
+    torch.cuda.empty_cache()
+    reload(kmeans_pytorch)
+    import kmeans_pytorch
+    if test_mode==True and device != "cpu":
+        #Torch implementation (custom)
+        cluster_centers, cluster_inference = kmeans_torch(X=x, k=_n_clusters, device=device)
+        cluster_centers = cluster_centers.cpu().numpy()
+        cluster_inference = cluster_inference.cpu().numpy()
+        
+        print(f'\nNumber of clusters: {_n_clusters} for {client_locs_train.shape[0]} entries.')
+        silhouette = silhouette_score(client_locs_train, cluster_inference, sample_size=int(client_locs_train.shape[0]*silhouette_multiplier))
+        print(f'Silhouette score - Torch, custom - {silhouette} - Best is 1 - Worst is -1')
+        calinski_harabasz = calinski_harabasz_score(client_locs_train, cluster_inference)
+        print(f'Calinski Harabasz score - Torch, custom - {calinski_harabasz} - Higher is better')
+        davies_bouldin = davies_bouldin_score(client_locs_train, cluster_inference)
+        print(f'Davies Bouldin score - Torch, custom - {davies_bouldin} - Best is 0')
+        
+        #Torch implementation (lib)
+        cluster_inference, cluster_centers = kmeans_pytorch.kmeans(
+        X=x, num_clusters=_n_clusters, distance='euclidean', device=torch.device('cuda:0'), tol=1e-4)
+        print(f'\nNumber of clusters: {_n_clusters} for {client_locs_train.shape[0]} entries.')
+        silhouette = silhouette_score(client_locs_train, cluster_inference, sample_size=int(client_locs_train.shape[0]*silhouette_multiplier))
+        print(f'Silhouette score - Torch, lib - {silhouette} - Best is 1 - Worst is -1')
+        calinski_harabasz = calinski_harabasz_score(client_locs_train, cluster_inference)
+        print(f'Calinski Harabasz score - Torch, lib - {calinski_harabasz} - Higher is better')
+        davies_bouldin = davies_bouldin_score(client_locs_train, cluster_inference)
+        print(f'Davies Bouldin score - Torch, lib - {davies_bouldin} - Best is 0')
+        
+        #SKLearn implementation (comparison)
+        #SKLearn is more precise - will use it anyway
+        
+        perform_k_means(client_locs_train, _n_clusters)
+        
+print('\nDF created:\n')
+print(result_df.head(5))
     
 #%%
 #Plotting results
@@ -278,33 +297,6 @@ ax2.set_ylim([y1, y2])
 ax2.set_xlim([x1, x2])
 plt.show()
 fig1.get_figure().savefig("NSW_FS_pred_Voronoi.png")
-
-#%%
-fig2, (ax3, ax4) = plt.subplots(ncols = 2, figsize = _figsize*scale)
-plt.legend(fontsize='large')
-australia.plot(ax = ax3, color='lightgrey', edgecolor='grey', linewidth=scale/3, zorder=1)
-fs_pred = sns.scatterplot(ax = ax3, data=predicted_plot, x=predicted_plot['lon'], y=predicted_plot['lat'], legend=True, zorder=3, s=scale**(1.5)*_size*10, marker='x', color='red', label='predicted')
-fs_real = sns.scatterplot(ax = ax3, data=fs_df, x='lon', y='lat', legend=True, zorder=3, s=scale**(1.5)*_size*10, marker='+', color='green', label='actual')
-plt.setp(fs_pred.get_legend().get_texts(), fontsize='20')
-plt.setp(fs_real.get_legend().get_texts(), fontsize='20')
-'''#COLORIZE
-for region in vor.regions:
-    if not -1 in region:
-        polygon = [vor.vertices[i] for i in region]
-        plt.fill(*zip(*polygon), alpha=0.4)
-'''
-ax3.set_ylim([-38, -28])
-ax3.set_xlim([140, 155])
-
-australia.plot(ax = ax4, color='lightgrey', edgecolor='grey', linewidth=scale/3, zorder=1)
-fs_pred = sns.scatterplot(ax = ax4, data=predicted_plot, x=predicted_plot['lon'], y=predicted_plot['lat'], legend=True, zorder=3, s=scale**(1.5)*_size*10, marker='x', color='red', label='predicted')
-fs_real = sns.scatterplot(ax = ax4, data=fs_df, x='lon', y='lat', legend=True, zorder=3, s=scale**(1.5)*_size*10, marker='+', color='green', label='actual')
-plt.setp(fs_pred.get_legend().get_texts(), fontsize='20')
-plt.setp(fs_real.get_legend().get_texts(), fontsize='20')
-ax4.set_ylim([y1, y2])
-ax4.set_xlim([x1, x2])
-plt.show()
-fig1.get_figure().savefig("NSW_FS_pred_real.png")
 
 #%%
 #Snippets
@@ -355,5 +347,3 @@ result_df.to_csv('df_k_means_metrics.csv')
 #%%
 print(list(itertools.product([client_locs_train], [cv], fraction_ids, _n_clusters_list)))
 """
-#%%
-
