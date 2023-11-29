@@ -304,7 +304,7 @@ plt.setp(fs_real.get_legend().get_texts(), fontsize='20')
 ax4.set_ylim([y1, y2])
 ax4.set_xlim([x1, x2])
 plt.show()
-fig1.get_figure().savefig("NSW_FS_pred_real.png")
+fig2.get_figure().savefig("NSW_FS_pred_real.png")
 
 #%%
 #Snippets
