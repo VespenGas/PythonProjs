@@ -131,6 +131,31 @@ classmethod decorator allows the method to be called with class name,
 #inherit __init__
 #^super().__init__(var_names)
 
+#dataclass decorator
+#no __init__ needed for dataclass
+
+'''
+from dataclasses import dataclass, field
+
+@dataclass([frozen=False, kwonly=True])
+#frozen=True - no properties can be changed for initialised class instance
+#kwonly=True - can only accept named arguments on initialization
+class Something():
+    property1:int,
+    property2:str,
+    bool_property:bool = True
+    email:field(default_factory=list)
+    id:field(init=False, default_factory=generate_id_function)
+    #if init=False, var cannot be explicitly provided when initialising the class
+    #it will be generated or set to default inside of a class
+    var3:field(init=False, repr=False)
+    #if repr=False, will not display property in default __repr__ when the
+        class is called
+    
+    def __post_init__(self) -> None:
+        self.var3 = f'{email} {id}'
+    #This post-init statement generates properties after initialization if needed
+'''
 
 #building your own decorator
 def dec(func):
@@ -865,6 +890,17 @@ import scipy as sp
 signal
 .sawtooth()
 '''
+#Voronoi diagram and plot
+vor = scipy.spatial.Voronoi(points)
+scipy.spatial.voronoi_plot_2d(vor, show_vertices=False, line_colors='orange',
+                      line_width=2, line_alpha=0.6, point_size=2)
+
+#%%
+#Time series decomposition
+from statsmodels.tsa.seasonal import seasonal_decompose
+result = seasonal_decompose(series, model='additive'[, period=int])
+#Period not required if series is Pandas Series
+#model = "additive", "multiplicative"
 
 
 #%%
@@ -1668,6 +1704,21 @@ shutil.rmtree(path)
 
 shutil.which('command_from_cmd')
 #^returns path to the file, executed by the command
+
+#%%
+#Pathlib - more functionality than shutil
+from pathlib import *
+p = Path('.')
+#^ list subdirectories
+PurePath()
+list(p.glob('**/*.py'))
+#^ list all .py files in subdirectory tree
+.exists()
+#file/dir exists bool
+.isdir()
+#dir exists bool
+.isfile()
+#file exists bool
 
 #%%
 from ctypes import *
