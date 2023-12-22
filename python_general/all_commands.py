@@ -911,7 +911,7 @@ df = pd.read_csv('text.csv', index_col = 'col_name', na_values = [list])
 #^index_col equivalent to df.set_index, but with file read
 #na_values - detects which values are considered to be NaN, None, etc.
 #parse_dates = ['column'] - sets a column to be read in datetime64 format
-
+#index_col = False - do not read index
 #DTYPES
 df.info()
 #^shows size of resultant matrix and data types of columns
@@ -1253,7 +1253,9 @@ data column is converted to named columns with 0/1 binary values
 dummy_na - if true, will create a column indicating True (1) if value
  in row is np.nan
 '''
-
+#SAVING TO CSV
+df.to_csv('df.csv')
+#index = False - do not save index
 
 
 #%%
@@ -1530,7 +1532,7 @@ from nltk.stem import WordNetLemmatizer
 lemmatizer = WordNetLemmatizer()
 lemma_words = [lemmatizer.lemmatize(word) for word in list_of_words]
 #lemmatizer.lemmatize(word, pos='a')
-#pos='a' (default i 'n') in this case means that the words will be returned as default form
+#pos='a' (default is 'n') in this case means that the words will be returned as default form
 #instead of originally comparative or superlative (e.g. worse, worst -> bad)
 
 #NAMED ENTITY RECOGNITION (NER)
