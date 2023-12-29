@@ -188,7 +188,7 @@ def find_model(train_file = 'train.csv'):
     models_scatter = sns.scatterplot(results, x = results['CV_Time'], y = results['F1_score'])
     label_point(results['CV_Time'], results['F1_score'], results['Model'], plt.gca())
     plt.grid()
-    models_scatter.get_figure().savefig('models_scatter.png')
+    models_scatter.get_figure().savefig('models_scatter.png', bbox_inches = 'tight')
     #Using the best model - Complement Bayes:
     model = ComplementNB(**optimal_params_complement_bayes.best_params_)
     t0 = time()
@@ -202,8 +202,7 @@ def find_model(train_file = 'train.csv'):
     disp = ConfusionMatrixDisplay(confusion, display_labels=emotions)
     disp.plot()
     plt.xticks(rotation=45)
-    plt.show()
-    plt.savefig('confusion.png')
+    plt.savefig('confusion_matrix.png', bbox_inches = 'tight')
     return results.iloc[0]
     #out['pred'].to_csv('predictions.txt', index=False, header=False)
 def train_test(train_file = 'train.csv', test_file = 'test.csv'):
