@@ -1648,7 +1648,7 @@ random.randrange(start, stop, step)
 random.randint(a, b)
 #^outputs a random integer from a to b, including b
 secrets.randbelow(upper)
-#^outputs a truly random float from range[0,upper)
+#^outputs a truly random int from range[0,upper)
 random.choice(list_of_values)
 secrets.choice(list_of_values)
 #^choose a random value from a list
