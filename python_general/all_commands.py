@@ -224,6 +224,9 @@ string.split('b')
 string.partition('b')
 ^takes the leftmost 'b' and splits the string around it, outputs tuple:
     ('left side', 'b', 'right_side')
+string.rpartition('b')
+^takes the rightmost 'b' and splits the string around it, outputs tuple:
+    ('left side', 'b', 'right_side')
 """ str """ - string with multiple line input
 """\ str """ - string with multiline input, where 1st \n is ignored
 ESCAPE SEQUENCES:
@@ -1617,7 +1620,8 @@ os.getpid()
 os.kill(pid)
 #^kills process with given pid
 os.system("path")
-#^physically open an application or file - UNIX ONLY
+#^physically open an application or file - LINUX ONLY
+
 '''
 WINDOWS:
     import subprocess
@@ -1625,6 +1629,7 @@ WINDOWS:
     subprocess.Popen(["explorer", out_file],
                      creationflags=subprocess.DETACHED_PROCESS)
 '''
+
 #%%
 import tempfile
 temp = tempfile.NamedTemporaryFile(prefix='', suffix='')
@@ -1869,7 +1874,9 @@ soup.find('div', class_='footer')
 #^finds the first footer div
 soup.find_all('div', class_='class_name')
 #^finds all footer div
-
+soup.find('div').get('href')
+soup.find(id='element_id').get('href')
+#^get element of the given tag
 
 #%%
 import itertools
@@ -1961,8 +1968,19 @@ text = textract.process('path/file.doc/docx')
 text = text.decode('encoding')
 #^normally utf-8
 #^extracts text from doc or docx file
-
-
+#%%
+import validators
+#raises ValidationError (warning) if False
+#input is string
+validators.url('https://www.google.com')
+validators.btc_address('')
+validators.card_number('')
+validators.email('')
+validators.iban('')
+validators.ipv4('') #ipv6 too
+validators.mac_address('')
+validators.sha256('') #512 too
+validators.visa('') #union pay, mastercard
 
 #%%
 #Zipfile and rarfile
