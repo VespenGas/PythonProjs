@@ -1748,6 +1748,41 @@ libc.time(None)
 byref()
 #^function argument
 
+#----------------
+import ctypes
+#CTypes can run C and C++ code in Python
+#Define a C variable:
+#string only (if var will be changed to a larger string):
+string = ctypes.create_string_buffer(num_of_bytes)
+#num_of_bytes is max possible string size
+#--
+integer = ctypes.c_int(100)
+string = ctypes.c_char_p(b'foobar')
+#To update a value:
+integer.value = 200
+string.value = b'barfoo'
+#To import a C library
+clibrary = ctypes.CDLL('cfile.so')
+#.so file is generated as lib from .c file using:
+    #gcc -fPIC -shared -o -cfile.so cfile.c
+#.so file is generated as lib from .cpp file using:
+    #g++ -fPIC -shared -o -cfile.so cfile.cpp
+#as input to terminal (CMD)
+clibrary.function_name()
+#^runs and shows the output of the function in the library (stdout)
+clibrary.function_name(b'str', number)
+#^string cannot be passed over to C function as argument, convert to binary string
+#Alternative:
+lib = clibrary.function_name
+#^creates an instance of the function. This instance receives var annotations:
+lib.argtypes = [ctypes.c_char_p, ctypes.int] #etc.
+#Function return dtypes:
+lib.restype = ctypes.c_char_p
+lib(b'str', number)
+#same as clibrary.function_name(b'str', number)
+#C++
+#To avoid the use of name mangling (used to provide function overloading),
+#encase C++ function in ''' extern "C" {......}" '''
 
 #%%
 import sys
@@ -1798,18 +1833,22 @@ with requests.Session():
 #txt or csv read
 page = requests.get('url')
 #^get access to a webpage
+params = {'q':'foobar', 'source': 'Desktop'}
+page = requests.get('url', params=params)
+#^this request is a get request with parameters, normally displayed in URL as:
+#...url.com/?q=foobar&source=desktop
+
 #If a webpage is text:
-page.text
-#is the webpage contents displayed as text
 ptxt = page.text
+#is the webpage contents displayed as text
 #If a webpage is image only:
 page.content
-#is the webpage contents displayed as bytes
-
+#^is the webpage contents displayed as bytes
 #Image from website can be written to image file:
 with open('img.png', 'wb') as img:
     img.write(page.content)
 #is saved in .py file directory
+
 page.status_code
 #2xx - ok, 3xx - ok, but redirects, 4xx - client error, 5xx - server error
 ''' 
@@ -1820,20 +1859,18 @@ page.status_code
 page.ok
 #bool that checks status code and outs True id code 2xx or 3xx
 #   and False if code is 4xx or 5xx
+page
+#^is a <Response ...> type with ... being status code
+#equivalent to page.ok in if statements (True when 2xx-3xx)
 page.headers
 #displays all needed information about page formatting
-
-
-url_params = {'page': 2, 'count': 25}
-page = requests.get('url', params=url_params)
-#^requests can accept additional parameters,
-#   which will modify the original URL as it is done when navigating
-#   through pages (e.g...com/test?page=2&count=25 here)
 page.url
 #displays the actual URL sent by requests lib
+
 ''' In order to POST data to the URL: '''
-userdata = {'username': 'John', 'password':'1234qwerty'}
-page = requests.post('url/post', data = userdata)
+data = {'username': 'John', 'password':'1234qwerty'}
+page = requests.post('URl/post', headers = headers,  data = data, allow_redirects = True)
+#data can be retrieved normally in Network - post - Headers in web browser
 print(page.text)
 #If response is JSON, .json() method can be used to transform
 #   raw text to dictionary:
@@ -1877,6 +1914,7 @@ soup.find_all('div', class_='class_name')
 soup.find('div').get('href')
 soup.find(id='element_id').get('href')
 #^get element of the given tag
+
 
 #%%
 import itertools
