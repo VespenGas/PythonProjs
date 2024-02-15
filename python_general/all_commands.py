@@ -78,7 +78,7 @@ arr = next(list, default)
 #startpos and endpos are optional and define index margins of search [)
 
 #SETS and FROZENSETS
-#are dictionaries without values
+#are dictionaries without keys
 a = set()
 b = frozenset()
 #set can be changed, frozenset is immutable
@@ -128,8 +128,13 @@ classmethod decorator allows the method to be called with class name,
     def input123(self, input):
         self._input = input
 '''
+#Placing _ or __ is a proposition, not a rule
+#_ - hidden vars - changing may affect the class execution
+#__ - protected vars - changing will break the class/var data is sensitive
+
 #inherit __init__
 #^super().__init__(var_names)
+#empty var_names = all vars
 
 #dataclass decorator
 #no __init__ needed for dataclass
@@ -160,8 +165,10 @@ class Something():
 #building your own decorator
 def dec(func):
     def dec_inner(*args, **kwargs):
+        #code here
         print('This code is executed before the passed function')
         ret = func(*args, **kwargs)
+        #more code here
         print('This code is executed after the passed function')
         return ret
     return dec_inner
@@ -212,6 +219,17 @@ def cube(x) -> int:
     a = x**3
     print(a)
     return a
+
+#Other functools decorators
+from functools import lru_cache, cache
+
+@lru_cache(maxsize=128)
+#^implements a cache to the function which remembers results of all iterations
+#if the function is recursive
+#Maxsize is the maximum bytes taken by the cache of the function
+@cache
+#^=@lru_cache(maxsize=None) - cache without a limit
+
 
 #strings
 #strings are immutable type, so they cannot be modified
@@ -1915,15 +1933,13 @@ soup.find('div').get('href')
 soup.find(id='element_id').get('href')
 #^get element of the given tag
 
-
 #%%
 import itertools
-#itertools objects should be iterated
+#itertools objects is a generator - should be iterated or converted to list
 itertools.combinations([list], length_of_list)
-
 itertools.permutations([list], length_of_list)
-
 #^process all combinations from a list. Combination length is length_of_lists
+
 itertools.product([list], repeat=2)
 #or
 itertools.product([list], string, [list],...)
@@ -1942,6 +1958,33 @@ count - starts count with number given, num++ each generation until inf
 cycle - generates list until end, then repeats, inf
 repeat - cycle, but not inf (not endless repetition)
 '''
+#%%
+import more_itertools
+#More itertools functions - https://more-itertools.readthedocs.io/en/stable/api.html
+more_itertools.flatten([list_of_lists])
+#^equivalent to np.ndarray.flatten for builtin lists
+more_itertools.collapse([list_of_lists])
+#^fully flattens any tuples/lists/sets inside irrespective of nesting depth
+list1, list2, ... = more_itertools.divide(n, [list])
+#^divide list into n equal in length (if possible) parts
+#if n > len(list), remaining parts are empty lists
+more_itertools.split_at(input, lambda x: x=val, keep_separator = , maxsplit = -1)
+more_itertools.split_before(input, lambda x: x=val, maxsplit = -1)
+more_itertools.split_after(input, lambda x: x=val, maxsplit = -1)
+#split a list/tuple/string at all instances (or to maxsplit maximum lists):
+#   at - the list is split to before or after the lambda matching character
+#   keep_separator=True keeps the separator as the single element of a separate
+#   list
+#   before/after - as "at", but the separator is joined to either left (after)
+#   or right (before) list
+more_itertools.unzip([tuples])
+#^unzips the list of tuples
+#equivalent to list(zip(*list)) but does not read list into memory
+more_itertools.partition(rule, list)
+#^returns 2 tuples - 1st is "list" elements which match True,
+# 2nd - those which match False
+#rule can be lambda function with bool output
+
 #%%
 #datetime
 import datetime
@@ -2057,10 +2100,4 @@ for i in tqdm(range(1000)):
 
 #%%
 #temp
-
-
-
-#%%
-
-
 
