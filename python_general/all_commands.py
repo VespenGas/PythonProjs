@@ -1110,7 +1110,7 @@ df[['col1', 'col2']] = df['col'].str.split(' ', expand=True)
 df.droplevel()
 """
 Drops columns from multiindex data frames
-.droplevel(0) will drom column 0 (leftmost index)
+.droplevel(0) will drop column 0 (leftmost index)
 .droplevel(1) will drop 2nd column (secondary index)
 axis=1 - will be removing row indexes from multiindex columns 
 """
