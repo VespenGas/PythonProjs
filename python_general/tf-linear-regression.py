@@ -47,13 +47,13 @@ test_labels = test_features.pop('MPG')
 
 normalizer = layers.Normalization(axis=-1)
 #^init normalizer
-normalizer.adapt(np.array(train_features))
+normalizer.adapt(np.array(train_features, dtype=np.float))
 #^fits preprocessing layer state to the data
 print(normalizer.mean.numpy())
 
 #Linear Regression with 1 variable:
 #Create a custom normalizer layer:
-horsepower = np.array(train_features['Horsepower'])
+horsepower = np.array(train_features['Horsepower'], dtype=float)
 horsepower_normalizer = layers.Normalization(input_shape=[1,], axis=None)
 horsepower_normalizer.adapt(horsepower)
 #Create a model with 2 layers: normalizer and Dense (linear transform)
@@ -120,17 +120,12 @@ linear_model.compile(
     loss='mean_absolute_error'
     )
 history2 = linear_model.fit(
-    train_features,
+    np.asarray(train_features, dtype=float),
     train_labels,
     epochs=100,
     validation_split=0.2,
     verbose=0
     )
 plot_loss(history2)
-test_results['linear_model'] = linear_model.evaluate(test_features, test_labels, verbose=0)
-
-
-
-
-
+test_results['linear_model'] = linear_model.evaluate(np.asarray(test_features, dtype=float), test_labels, verbose=0)
 

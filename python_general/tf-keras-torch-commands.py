@@ -46,9 +46,6 @@ if torch.cuda.is_available():
     print(f'Total GPU memory is: {total_mem/1024**2} MB')
 else:
     print("GPU not available!")
-print(torch.zeros(1).cuda())
-
 
 #if CUDA out of memory, set:
 #os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:<enter-size-here>"
-

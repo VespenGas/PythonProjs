@@ -17,6 +17,7 @@ else:
   request = requests.get("https://raw.githubusercontent.com/mrdbourke/pytorch-deep-learning/main/helper_functions.py") 
   with open("helper_functions.py", "wb") as f: 
     f.write(request.content) 
+
 from helper_functions import plot_decision_boundary
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -60,7 +61,7 @@ print(X_blob_train.shape, X_blob_test.shape, y_blob_train.shape, y_blob_test.sha
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
 metric = torchmetrics.classification.MulticlassAccuracy(NUM_CLASSES).to(device)
-epochs = 40
+epochs = 10
 for epoch in range(epochs+1):
     y_logits = model(X_blob_train).squeeze()
     y_pred = torch.softmax(y_logits, dim=1).argmax(dim=1)
@@ -81,5 +82,4 @@ for epoch in range(epochs+1):
     
 
 plot_decision_boundary(model, X_blob_test, y_blob_test)
-
 

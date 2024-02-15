@@ -2,7 +2,7 @@
     
 #Compile a model for it to run faster:
 from torch import nn
-model = nn.Sequential(.....)
+#model = nn.Sequential(.....)
 torch.compile(model)
 
 #Set default device globally:
