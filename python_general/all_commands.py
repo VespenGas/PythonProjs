@@ -1137,7 +1137,7 @@ df.nsmallest(int, 'col_name')
 df['col_name'].median()
 '''
 median can be replaced with:
-    count - counts rows with non-NaN values
+    count - counts rows (or cols) with non-NaN values
     mean
     std
     min
