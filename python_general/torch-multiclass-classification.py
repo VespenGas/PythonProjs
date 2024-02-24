@@ -51,7 +51,7 @@ class BlobModel(nn.Module):
             )
     def forward(self, x):
         return self.linear_layer_stack(x)
-    
+
 model = BlobModel(NUM_FEATURES, NUM_CLASSES, hidden_units=30).to(device)
 X_blob_train = X_blob_train.to(device)
 X_blob_test = X_blob_test.to(device)

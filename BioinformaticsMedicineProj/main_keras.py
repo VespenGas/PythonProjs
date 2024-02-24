@@ -1,28 +1,41 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Feb 23 19:30:09 2024
+Created on Sat Feb 24 14:57:34 2024
 
 @author: eugen
 """
-import torch
-import torchmetrics
+
 import pandas as pd
 import numpy as np
 import warnings
+import tensorflow as tf
+from tensorflow import keras
 pd.set_option('display.max_columns', 120)
 warnings.filterwarnings('ignore')
 
 from ucimlrepo import fetch_ucirepo
-from torch import nn
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Activation, Normalization, Dropout
 
 def percent_of_nan_rows(dataset:pd.DataFrame, column:str) -> float:
     return len(X[X[column].isna()]) / len(X) * 100
 
+GPUs = tf.config.list_physical_devices('GPU')
+if GPUs:
+    print(f'GPU data: {tf.config.experimental.get_device_details(GPUs[0])}')
+    for GPU in GPUs:
+        tf.config.experimental.set_memory_growth(GPU, True)
+else:
+    print('No GPUs detected!')
+CPUs = tf.config.list_physical_devices('CPU')
+print(f'CPU is: {tf.config.experimental.get_device_details(CPUs[0])}')
+
 myocardial_infarction_complications = fetch_ucirepo(id=579)
 X = myocardial_infarction_complications.data.features
 y = myocardial_infarction_complications.data.targets
+
 X = X.fillna(np.nan)
 vars_ = pd.DataFrame(myocardial_infarction_complications.variables)
 cat_cols = vars_[(vars_['role'] == 'Feature') & (vars_['type'] == 'Categorical')]['name'].tolist()
@@ -57,76 +70,50 @@ for column in X.columns:
             pass
         else:
             X[column] = X[column].apply(lambda l: l if not np.isnan(l) else X[column].mean() + np.random.random()*2*X[column].std())
+            X[column] = X[column].apply(lambda l: (l-X[column].mean())/X[column].std())
             pass
 X[bin_cols] = X[bin_cols].applymap(lambda x: bool(x))
 X = pd.get_dummies(data = X, columns = cat_cols)
 bin_cols_preds = vars_[(vars_['role'] == 'Target') & (vars_['type'] == 'Binary')]['name'].tolist()
 cat_cols_preds = vars_[(vars_['role'] == 'Target') & (vars_['type'] == 'Categorical')]['name'].tolist()
 y[bin_cols_preds] = y[bin_cols_preds].applymap(lambda x: bool(x))
-y = pd.get_dummies(data = y, columns = cat_cols_preds)
+#y = pd.get_dummies(data = y, columns = cat_cols_preds)
 data = X.merge(y, left_index=True, right_index=True)
+
+#data = pd.concat([data[data['LET_IS'] != 0], data[data['LET_IS'] == 0].sample(int(len(data[data['LET_IS'] != 0])))])
+data = data[data['LET_IS'] != 0]
 X = data[X.columns]
 y = data[y.columns]
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-torch.set_default_device(device)
-print(f'The device is: {device}')
 
-class BioModel(nn.Module):
-    def __init__(self, input_features, output_features, hidden_units=500):
-        super().__init__()
-        self.input_features = input_features
-        self.output_features = output_features 
-        self.hidden_units = hidden_units
-        self.linear_layer_stack = nn.Sequential(
-            nn.Linear(in_features=self.input_features, out_features=self.hidden_units*2),
-            nn.GELU(),
-            nn.Linear(in_features=self.hidden_units*2, out_features=self.hidden_units*2),
-            nn.GELU(),
-            nn.Linear(in_features=self.hidden_units*2, out_features=self.hidden_units),
-            nn.GELU(),
-            nn.Linear(in_features=self.hidden_units, out_features=self.hidden_units),
-            nn.ReLU(),
-            nn.Linear(in_features=self.hidden_units, out_features=self.output_features),
-            nn.Softmax(),
-            )
-    def forward(self, x):
-        return self.linear_layer_stack(x)
-
-NUM_FEATURES = X.shape[1]
-NUM_CLASSES = y.shape[1]
-
-model = BioModel(NUM_FEATURES, NUM_CLASSES).to(device)
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, shuffle=True
     )
-X_train = torch.tensor(X_train.values.astype(float)).type(torch.float32)
-y_train = torch.tensor(y_train.values.astype(float)).type(torch.float32)
-X_test = torch.tensor(X_test.values.astype(float)).type(torch.float32)
-y_test = torch.tensor(y_test.values.astype(float)).type(torch.float32)
-loss_fn = nn.CrossEntropyLoss()
-#loss_fn = nn.BCEWithLogitsLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=0.01, weight_decay=0.005)
-#metric = torchmetrics.classification.MulticlassAccuracy(NUM_CLASSES)
-torch.compile(model)
-epochs = 300
-for epoch in range(epochs+1):
-    y_pred = model(X_train)
-    loss = loss_fn(y_pred, y_train)
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    model.eval()
-    with torch.inference_mode():
-        test_pred = model(X_test)
-        test_loss = loss_fn(test_pred, y_test)
-        #test_acc = metric(test_pred, y_test)
-        if epoch%10 == 0:
-            print(f'Epoch: {epoch}, Loss: {loss}, Test loss: {test_loss}')
-print(y_test)
-print('='*80)
-print(np.isclose(y_pred.detach().cpu().numpy(), 1, atol=1e-4))
 
+X_train = np.asarray(X_train).astype(float)
+y_train = np.asarray(y_train).astype(float)
+X_test = np.asarray(X_test).astype(float)
+y_test = np.asarray(y_test).astype(float)
 
+normalizer = Normalization(axis=-1)
+normalizer.adapt(X_train)
+
+model = Sequential([
+    normalizer,
+    Dense(200),
+    Activation('gelu'),
+    #Dropout(0.1),
+    Dense(500),
+    Dense(500),
+    Activation('gelu'),
+    #Dropout(0.1),
+    Dense(12),
+    Activation('softmax'),
+    ])
+model.compile(optimizer=keras.optimizers.legacy.RMSprop(learning_rate=1e-5), loss='mean_absolute_error', metrics=['categorical_accuracy'])
+model.fit(X_train, y_train, epochs=20, batch_size=32)
+
+metrics = model.evaluate(X_test, y_test, batch_size=32)
+y_pred = model.predict(X_test)
 
 

@@ -1,11 +1,7 @@
 #Machine learning libs - GPU highly recommended
 #Linux environment required
-import numpy as np
-import pandas as pd
 import tensorflow as tf
 import torch
-import seaborn as sns
-import matplotlib.pyplot as plt
 
 
 #%%
@@ -13,7 +9,8 @@ import matplotlib.pyplot as plt
 print(tf.__version__)
 print(tf.sysconfig.get_build_info())
 #tf.compat.v1.Session()
-
+sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(log_device_placement=True))
+print(sess)
 GPUs = tf.config.list_physical_devices('GPU')
 if GPUs:
     print(f'GPU data: {tf.config.experimental.get_device_details(GPUs[0])}')
@@ -33,9 +30,7 @@ if GPUs:
 var = tf.Variable(0, dtype=tf.int64)
 matrix = tf.Variable([1,2,3], dtype=tf.int64)
 const = tf.constant('value', dtype=tf.string)
-tf.rank(matrix)
-matrix.shape
-
+print(const)
 
 #%%
 #Pytorch
