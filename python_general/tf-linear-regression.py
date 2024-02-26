@@ -116,7 +116,7 @@ linear_model = tf.keras.Sequential([
 
 #linear_model.predict(train_features)
 linear_model.compile(
-    optimizer=tf.keras.optimizers.legacy.Adam(learning_rate=0.1),
+    optimizer=tf.keras.optimizers.legacy.SGD(learning_rate=0.1),
     loss='mean_absolute_error'
     )
 history2 = linear_model.fit(

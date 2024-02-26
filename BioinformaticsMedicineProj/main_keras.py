@@ -77,11 +77,11 @@ X = pd.get_dummies(data = X, columns = cat_cols)
 bin_cols_preds = vars_[(vars_['role'] == 'Target') & (vars_['type'] == 'Binary')]['name'].tolist()
 cat_cols_preds = vars_[(vars_['role'] == 'Target') & (vars_['type'] == 'Categorical')]['name'].tolist()
 y[bin_cols_preds] = y[bin_cols_preds].applymap(lambda x: bool(x))
-#y = pd.get_dummies(data = y, columns = cat_cols_preds)
+y = pd.get_dummies(data = y, columns = cat_cols_preds)
 data = X.merge(y, left_index=True, right_index=True)
 
-#data = pd.concat([data[data['LET_IS'] != 0], data[data['LET_IS'] == 0].sample(int(len(data[data['LET_IS'] != 0])))])
-data = data[data['LET_IS'] != 0]
+data = pd.concat([data[data['LET_IS_0'] == False], data[data['LET_IS_0'] != False].sample(int(len(data[data['LET_IS_0'] == False])))])
+#data = data[data['LET_IS'] != 0]
 X = data[X.columns]
 y = data[y.columns]
 
@@ -102,13 +102,13 @@ model = Sequential([
     normalizer,
     Dense(200),
     Activation('gelu'),
-    #Dropout(0.1),
-    Dense(500),
+    Dropout(0.1),
     Dense(500),
     Activation('gelu'),
-    #Dropout(0.1),
-    Dense(12),
-    Activation('softmax'),
+    Dropout(0.1),
+    Dense(19),
+    #Dense(12),
+    #Activation('softmax'),
     ])
 model.compile(optimizer=keras.optimizers.legacy.RMSprop(learning_rate=1e-5), loss='mean_absolute_error', metrics=['categorical_accuracy'])
 model.fit(X_train, y_train, epochs=20, batch_size=32)

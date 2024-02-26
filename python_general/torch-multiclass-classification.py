@@ -47,7 +47,7 @@ class BlobModel(nn.Module):
             nn.GELU(),
             nn.Linear(in_features=self.hidden_units, out_features=self.hidden_units),
             nn.GELU(),
-            nn.Linear(in_features=self.hidden_units, out_features=self.output_features)
+            nn.Linear(in_features=self.hidden_units, out_features=self.output_features),
             )
     def forward(self, x):
         return self.linear_layer_stack(x)

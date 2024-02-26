@@ -5,6 +5,7 @@ Created on Fri Feb 23 19:30:09 2024
 
 @author: eugen
 """
+
 import torch
 import torchmetrics
 import pandas as pd
@@ -96,7 +97,7 @@ class BioModel(nn.Module):
 NUM_FEATURES = X.shape[1]
 NUM_CLASSES = y.shape[1]
 
-model = BioModel(NUM_FEATURES, NUM_CLASSES).to(device)
+model = BioModel(NUM_FEATURES, NUM_CLASSES)
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, shuffle=True
     )
@@ -109,7 +110,7 @@ loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.01, weight_decay=0.005)
 #metric = torchmetrics.classification.MulticlassAccuracy(NUM_CLASSES)
 torch.compile(model)
-epochs = 300
+epochs = 30
 for epoch in range(epochs+1):
     y_pred = model(X_train)
     loss = loss_fn(y_pred, y_train)
@@ -123,10 +124,6 @@ for epoch in range(epochs+1):
         #test_acc = metric(test_pred, y_test)
         if epoch%10 == 0:
             print(f'Epoch: {epoch}, Loss: {loss}, Test loss: {test_loss}')
-print(y_test)
-print('='*80)
-print(np.isclose(y_pred.detach().cpu().numpy(), 1, atol=1e-4))
-
 
 
 
