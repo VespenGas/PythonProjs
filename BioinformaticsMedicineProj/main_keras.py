@@ -108,9 +108,9 @@ model = Sequential([
     Dropout(0.1),
     Dense(19),
     #Dense(12),
-    #Activation('softmax'),
+    Activation('softmax'),
     ])
-model.compile(optimizer=keras.optimizers.legacy.RMSprop(learning_rate=1e-5), loss='mean_absolute_error', metrics=['categorical_accuracy'])
+model.compile(optimizer=keras.optimizers.legacy.RMSprop(learning_rate=1e-5), loss=keras.losses.CategoricalCrossentropy(), metrics=['categorical_accuracy'])
 model.fit(X_train, y_train, epochs=20, batch_size=32)
 
 metrics = model.evaluate(X_test, y_test, batch_size=32)

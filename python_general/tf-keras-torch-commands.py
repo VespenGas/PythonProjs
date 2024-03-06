@@ -27,11 +27,10 @@ if GPUs:
     capabilityGPU = float(str(capabilityGPU[0]) + '.' + str(capabilityGPU[1]))
     print(f'Compute capability: {capabilityGPU}')
     assert capabilityGPU>3.5, 'CUDA compute capabiility lower than 3.5'
-var = tf.Variable(0, dtype=tf.int64)
-matrix = tf.Variable([1,2,3], dtype=tf.int64)
-const = tf.constant('value', dtype=tf.string)
-print(const)
 
+#To clear the GPU memory
+import numba
+numba.cuda.get_current_device().reset()
 #%%
 #Pytorch
 print(torch.cuda.is_available())
