@@ -1,11 +1,11 @@
 #Machine learning libs - GPU highly recommended
 #Linux environment required
-import tensorflow as tf
-import torch
 
 
 #%%
 #Tensorflow
+import tensorflow as tf
+
 print(tf.__version__)
 print(tf.sysconfig.get_build_info())
 #tf.compat.v1.Session()
@@ -28,11 +28,13 @@ if GPUs:
     print(f'Compute capability: {capabilityGPU}')
     assert capabilityGPU>3.5, 'CUDA compute capabiility lower than 3.5'
 
-#To clear the GPU memory
-import numba
-numba.cuda.get_current_device().reset()
+#Clear GPU memory
+from keras import backend as K
+K.clear_session()
+
 #%%
 #Pytorch
+import torch
 print(torch.cuda.is_available())
 if torch.cuda.is_available():
     total_free_mem, total_mem = torch.cuda.mem_get_info("cuda:0")
