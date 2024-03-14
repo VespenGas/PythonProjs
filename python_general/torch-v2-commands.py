@@ -13,9 +13,9 @@ torch.set_default_device('cpu')
 #...or locally:
 with torch.device(device):
     ...
+
 #Retrieve model weights and transforms from torchvision ready models:
 import torchvision
 model_weights = torchvision.models.ResNet50_Weights.IMAGENET1K_V2
 transforms = model_weights.transforms()
-
 

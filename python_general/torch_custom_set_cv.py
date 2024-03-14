@@ -87,8 +87,8 @@ test_set = datasets.ImageFolder(root=test_path, transform=test_data_transform, t
 class_names = train_set_aug.classes
 class_dict = train_set_aug.class_to_idx
 
-train_dataloader = DataLoader(dataset=train_set_aug, batch_size=BATCH_SIZE, shuffle=True, num_workers=os.cpu_count())
-test_dataloader = DataLoader(dataset=test_set, batch_size=BATCH_SIZE, num_workers=os.cpu_count())
+train_dataloader = DataLoader(dataset=train_set_aug, batch_size=BATCH_SIZE, shuffle=True, generator=torch.Generator(device='cuda'),)
+test_dataloader = DataLoader(dataset=test_set, batch_size=BATCH_SIZE, generator=torch.Generator(device='cuda'),)
 #print(next(iter(train_dataloader)))
 
 class TinyVGG(nn.Module):
@@ -97,13 +97,13 @@ class TinyVGG(nn.Module):
         self.sequential_model = nn.Sequential(
             nn.Conv2d(input_shape, hidden_layers, kernel_size = 3, stride = 1, padding=1),
             nn.GELU(),
-            nn.Conv2d(hidden_layers, hidden_layers, kernel_size = 3, stride = 1, padding=1),
-            nn.GELU(),
+            #nn.Conv2d(hidden_layers, hidden_layers, kernel_size = 3, stride = 1, padding=1),
+            #nn.GELU(),
             nn.MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False),
             nn.Conv2d(hidden_layers, hidden_layers, kernel_size = 3, stride = 1, padding=1),
             nn.GELU(),
-            nn.Conv2d(hidden_layers, hidden_layers, kernel_size = 3, stride = 1, padding=1),
-            nn.GELU(),
+            #nn.Conv2d(hidden_layers, hidden_layers, kernel_size = 3, stride = 1, padding=1),
+            #nn.GELU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Flatten(),
             nn.Linear(in_features=hidden_layers*16*16*256, out_features=3)
