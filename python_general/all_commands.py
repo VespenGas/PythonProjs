@@ -1192,7 +1192,7 @@ method : ffill - NaNs are replaced with previous non-NaN values along the axis
         along the axis
 limit - how many values are replaced along the axis (consecutive)
 '''
-df.interpolate(method = 'string', axis=, limit=, inplace=bool, limit_area = )
+df.interpolate(method = 'string', axis=, limit=, inplace=bool, limit_area=)
 '''
 method : linear - ignore indexes, treat vals as equally spaced
         time - 
