@@ -618,7 +618,20 @@ np.less(a,b)
 np.greater_equal(a,b)
 np.less_equal(a,b)
 #^elementwise comparisons of 2 arrays in terms of "a __sign__ b"
-
+#ARRAY COUNTS
+np.argmax(arr)
+#^returns an index of the maximum value in the array
+np.bincounts()
+#^works with an array on POSITIVE INTEGERS
+#returns the array, where indexes represent the integers, and values
+# represent counts of these integers
+#Works well when the most common element needs to be found:
+np.argmax(np.bincounts(arr))
+#STATISTICS
+np.cov(arr)
+#^Covariance matrix
+np.corrcoef(arr)
+#^Pearson product-moment correlation coefficients
 
 #ARRAY MANIPULATION
 np.concatenate((a, b), axis = )
